@@ -1,0 +1,102 @@
+REM Project: Snake
+REM Created: 5/23/2008 12:11:27 PM
+REM 
+REM ***** Main Source File *****
+REM 
+
+sync on
+sync rate 10
+
+#constant Columns = 50
+#constant Rows = 37
+
+#constant BlockSize = 16
+
+dim Blocks(Columns-1, Rows-1) as integer
+#constant NONE = 0
+#constant FOOD = 1
+#constant WALL = 2
+#constant SNAKE = 3
+
+for y = 0 to Rows-1
+  Blocks(0, y) = WALL
+  Blocks(Columns-1, y) = WALL
+next y
+
+for x = 0 to Columns-1
+  Blocks(x, 0) = WALL
+  Blocks(x, Rows-1) = WALL
+next x
+
+type coordinate
+  x as integer
+  y as integer
+endtype
+
+dim Snake() as coordinate
+
+for i = 1 to 3
+  gosub makefood
+  array insert at top Snake()
+  Snake().x = Columns/2
+  Snake().y = Rows-2
+  Blocks(Snake().x, Snake().y) = SNAKE
+next i
+
+ydir = -1
+
+load image "black.bmp", 1
+load image "blue.bmp", 2
+load image "green.bmp", 3
+load image "yellow.bmp", 4
+
+do
+
+  oldxdir = xdir
+  oldydir = ydir
+
+  xdir = rightkey() - leftkey()
+  ydir = downkey() - upkey()
+  
+  if (abs(xdir)+abs(ydir)-1) or (xdir=-oldxdir and ydir=-oldydir)
+    xdir = oldxdir
+    ydir = oldydir
+  endif
+  
+  array insert at top Snake()
+  Snake().x = Snake(1).x + xdir
+  Snake().y = Snake(1).y + ydir
+  
+  if Blocks(Snake().x, Snake().y) = WALL or Blocks(Snake().x, Snake().y) = SNAKE then end
+  if Blocks(Snake().x, Snake().y) = FOOD
+    gosub makefood
+    more = 3
+  endif
+  
+  if more
+    dec more
+  else
+    Blocks(Snake(array count(Snake())).x, Snake(array count(Snake())).y) = NONE
+    array delete element Snake(), array count(Snake())
+  endif
+  
+  Blocks(Snake().x, Snake().y) = SNAKE
+
+  for y = 0 to Rows-1
+    for x = 0 to Columns-1
+      paste image Blocks(x, y)+1, x*BLOCKSIZE, y*BLOCKSIZE
+    next x
+  next y
+  
+  sync
+loop
+
+makefood:
+
+  repeat
+    x = rnd(Columns-2)+1
+    y = rnd(Rows-2)+1
+  until Blocks(x, y) = NONE
+  Blocks(x, y) = FOOD
+
+return
